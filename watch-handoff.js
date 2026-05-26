@@ -277,6 +277,33 @@ async function triggerCursorComposer(prompt, config) {
   }
 }
 
+function buildClaudePrompt(nextAction) {
+  return [
+    'You are Claude Code, principal maintainer and architect for this project.',
+    'Cursor Composer is the junior implementation agent.',
+    'Your role: review for correctness, scope adherence, and architectural soundness.',
+    'Decide APPROVED, REQUEST_CHANGES, BLOCKED, or ESCALATE_TO_HUMAN.',
+    'Do not broaden scope unless the current patch cannot solve the issue.',
+    'Build/test/commit/push always requires explicit human approval — set APPROVED_FOR_BUILD and hand to Human, do not run them yourself.',
+    '',
+    'Read AGENT_STATE.json. You are owner=Claude.',
+    nextAction
+  ].join(' ');
+}
+
+function buildComposerPrompt(nextAction) {
+  return [
+    'You are Cursor Composer, the junior implementation agent.',
+    'Claude Code is the principal reviewer/architect.',
+    'Your role: execute narrow, already-decided implementation tasks. Make the smallest viable edit.',
+    'You may NOT approve your own work, make architectural decisions, or broaden scope beyond nextAction.',
+    'Hand off to Claude for review when done. Stop after handing off — the stop hook will wake you when your turn comes again.',
+    '',
+    'Read AGENT_STATE.json. You are owner=Composer.',
+    nextAction
+  ].join(' ');
+}
+
 async function handleStateChange(state, config) {
   if (isProcessing) return;
 
@@ -309,15 +336,15 @@ async function handleStateChange(state, config) {
       return;
     }
 
-    const prompt = `Read AGENT_STATE.json. You are owner=${state.owner}. ${state.nextAction || 'Act per nextAction.'}`;
+    const nextAction = state.nextAction || 'Act per nextAction.';
 
     if (state.owner === 'Claude') {
-      await triggerClaudeCode(prompt, config);
+      await triggerClaudeCode(buildClaudePrompt(nextAction), config);
     } else if (state.owner === 'Composer') {
-      triggerCursorComposer(prompt, config);
+      triggerCursorComposer(buildComposerPrompt(nextAction), config);
     } else if (state.owner === 'Human') {
       log('Human turn', colors.yellow);
-      showNotification('Agent Orchestrator', `Your turn: ${state.nextAction || ''}`, config.soundOnNotify);
+      showNotification('Agent Orchestrator', `Your turn: ${nextAction}`, config.soundOnNotify);
     }
   } finally {
     setTimeout(() => { isProcessing = false; }, 1500);

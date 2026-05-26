@@ -1,0 +1,7 @@
+{
+  "_comment": "Copy to .orchestrator.config.json in your project root. autoSubmit requires macOS Accessibility permission for Terminal/iTerm/Cursor (System Settings → Privacy & Security → Accessibility).",
+  "cursorAppName": "Cursor",
+  "autoSubmit": true,
+  "autoSubmitDelayMs": 800,
+  "soundOnNotify": true
+}

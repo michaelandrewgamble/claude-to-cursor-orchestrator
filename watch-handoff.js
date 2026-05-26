@@ -324,11 +324,63 @@ async function handleStateChange(state, config) {
   }
 }
 
+function ensureProjectScaffold() {
+  // Self-contained init: copy any missing files from this script's examples/
+  // into the current working directory. Running this script IS the intent.
+  const examplesDir = path.join(__dirname, 'examples');
+  const scaffold = [
+    { src: 'AGENT_STATE.json',         dest: 'AGENT_STATE.json',                       inline: defaultAgentState() },
+    { src: 'AGENT_LOG.md',             dest: 'AGENT_LOG.md',                           inline: '# Agent Log\n\nAppend-only history of agent actions.\n' },
+    { src: 'agent-orchestration.mdc',  dest: '.cursor/rules/agent-orchestration.mdc' },
+    { src: 'composer-stop.sh',         dest: '.cursor/hooks/composer-stop.sh',         executable: true },
+    { src: 'hooks.json',               dest: '.cursor/hooks.json' },
+    { src: 'orchestrator.config.json', dest: '.orchestrator.config.json' }
+  ];
+
+  const created = [];
+  for (const f of scaffold) {
+    const destPath = path.resolve(process.cwd(), f.dest);
+    if (fs.existsSync(destPath)) continue;
+
+    fs.mkdirSync(path.dirname(destPath), { recursive: true });
+    if (f.inline) {
+      fs.writeFileSync(destPath, f.inline);
+    } else {
+      const srcPath = path.join(examplesDir, f.src);
+      if (!fs.existsSync(srcPath)) continue;
+      fs.copyFileSync(srcPath, destPath);
+    }
+    if (f.executable) fs.chmodSync(destPath, 0o755);
+    created.push(f.dest);
+  }
+
+  if (created.length > 0) {
+    log('Scaffolded missing files for this project:', colors.green);
+    for (const f of created) log(`  + ${f}`, colors.green);
+    log('', colors.reset);
+  }
+}
+
+function defaultAgentState() {
+  return JSON.stringify({
+    status: 'DONE',
+    owner: 'None',
+    lastUpdatedBy: 'Human',
+    nextAction: 'No active task. Edit this file to start orchestration.',
+    humanEscalation: false,
+    escalationReason: null,
+    currentTask: null,
+    updatedAt: new Date().toISOString()
+  }, null, 2) + '\n';
+}
+
 function startWatching() {
+  ensureProjectScaffold();
+
   const statePath = path.resolve(process.cwd(), STATE_FILE);
 
   if (!fs.existsSync(statePath)) {
-    log(`${STATE_FILE} not found in ${process.cwd()}`, colors.red);
+    log(`${STATE_FILE} not found in ${process.cwd()} (scaffold failed?)`, colors.red);
     process.exit(1);
   }
 

@@ -1,0 +1,28 @@
+{
+  "name": "claude-to-cursor-orchestrator",
+  "version": "0.1.0",
+  "description": "Autonomous multi-agent orchestration between Claude Code and Cursor Composer",
+  "main": "watch-handoff.js",
+  "bin": {
+    "agent-orchestrator": "./watch-handoff.js"
+  },
+  "scripts": {
+    "start": "node watch-handoff.js",
+    "watch": "node watch-handoff.js"
+  },
+  "keywords": [
+    "claude",
+    "cursor",
+    "agent",
+    "orchestration",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "chokidar": "^3.5.3"
+  }
+}

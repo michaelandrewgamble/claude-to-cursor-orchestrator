@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "loop_limit": null,
+  "hooks": {
+    "stop": [
+      {
+        "command": "bash .cursor/hooks/composer-stop.sh",
+        "timeout": 300
+      }
+    ]
+  }
+}

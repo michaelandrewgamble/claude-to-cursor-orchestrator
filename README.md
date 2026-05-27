@@ -163,6 +163,25 @@ The protocol assumes:
 5. Agents append to `AGENT_LOG.md`, never rewrite prior entries
 6. Scope/version/release questions go up the chain: Composer → Claude → Human
 
+## When To Dispatch Composer (vs. Just Doing It)
+
+Orchestration has real overhead — the nextAction spec, Composer's rule loading, state-file ping-pong, review, and push chain together cost 1500–2500 tokens per task vs. ~500 if Claude just makes the edit. Use the right tool:
+
+**Skip orchestration when:**
+- Change is <5 lines and the location is obvious
+- Trivial edits (typos, MIME type fixes, single-line config bumps)
+- Diagnostic work / investigation
+- Architectural decisions
+
+**Use orchestration when:**
+- Multi-file or structural changes — Composer's fresh context beats filling Claude's
+- Mechanical refactors where principal review catches real bugs
+- Long workflows where Claude's context is getting valuable
+- Plan/doc restructures
+- Cursor is flat-subscription and Claude is per-token (offloads implementation cost to Cursor)
+
+**Heuristic:** before writing a Composer nextAction, ask *"would this take me >5 minutes of file reading + editing?"* If no, skip the orchestration and just edit. If yes, or if junior/principal role separation adds real value, dispatch.
+
 ## Troubleshooting
 
 ### Auto-submit doesn't actually send
